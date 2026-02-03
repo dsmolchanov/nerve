@@ -1,0 +1,129 @@
+version: "3.9"
+
+services:
+  stalwart:
+    image: stalwartlabs/mail-server:latest
+    container_name: neuralmail-stalwart
+    ports:
+      - "2525:25"
+      - "5870:587"
+      - "1430:143"
+      - "9930:993"
+      - "8080:8080"
+    environment:
+      - STALWART_CONFIG=/etc/stalwart/config.toml
+    volumes:
+      - stalwart-data:/var/lib/stalwart
+      - ./configs/dev/stalwart.toml:/etc/stalwart/config.toml:ro
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  cortex:
+    build:
+      context: .
+      dockerfile: deploy/docker/cortex/Dockerfile
+    container_name: neuralmail-cortex
+    depends_on:
+      - stalwart
+      - postgres
+      - qdrant
+      - redis
+    ports:
+      - "8088:8088"
+    environment:
+      - NM_CONFIG=/etc/neuralmail/config.yaml
+      - NM_DEV_MODE=true
+      - NM_JMAP_URL=http://stalwart:8080/jmap
+      - NM_JMAP_USERNAME=dev@local.neuralmail
+      - NM_JMAP_PASSWORD=devpass
+      - NM_JMAP_PUSH_SECRET=devsecret
+      - NM_DB_DSN=postgres://neuralmail:neuralmail@postgres:5432/neuralmail?sslmode=disable
+      - NM_QDRANT_URL=http://qdrant:6333
+      - NM_QDRANT_COLLECTION=messages_v1536
+      - NM_EMBED_DIM=1536
+      - NM_REDIS_URL=redis://redis:6379/0
+      - NM_SMTP_HOST=stalwart
+      - NM_SMTP_PORT=25
+      - NM_SMTP_USERNAME=dev@local.neuralmail
+      - NM_SMTP_PASSWORD=devpass
+      - NM_SMTP_FROM=dev@local.neuralmail
+      - NM_OBJECT_STORE_URL=http://minio:9000
+      - NM_OBJECT_STORE_BUCKET=neuralmail
+      - NM_OBJECT_STORE_ACCESS_KEY=minio
+      - NM_OBJECT_STORE_SECRET_KEY=minio123
+      - NM_POLICY_PATH=configs/policy/support-default-v1.yaml
+      - NM_LLM_PROVIDER=noop
+      - NM_EMBED_PROVIDER=noop
+      - NM_LOG_LEVEL=info
+    volumes:
+      - ./configs/dev/cortex.yaml:/etc/neuralmail/config.yaml:ro
+
+  worker:
+    build:
+      context: .
+      dockerfile: deploy/docker/cortex/Dockerfile
+    container_name: neuralmail-worker
+    depends_on:
+      - postgres
+      - qdrant
+      - redis
+    command: ["/app/neuralmaild", "worker"]
+    environment:
+      - NM_CONFIG=/etc/neuralmail/config.yaml
+      - NM_DB_DSN=postgres://neuralmail:neuralmail@postgres:5432/neuralmail?sslmode=disable
+      - NM_QDRANT_URL=http://qdrant:6333
+      - NM_QDRANT_COLLECTION=messages_v1536
+      - NM_EMBED_DIM=1536
+      - NM_REDIS_URL=redis://redis:6379/0
+      - NM_EMBED_PROVIDER=noop
+      - NM_LOG_LEVEL=info
+    volumes:
+      - ./configs/dev/cortex.yaml:/etc/neuralmail/config.yaml:ro
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: neuralmail-postgres
+    ports:
+      - "54320:5432"
+    environment:
+      - POSTGRES_DB=neuralmail
+      - POSTGRES_USER=neuralmail
+      - POSTGRES_PASSWORD=neuralmail
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: neuralmail-qdrant
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant-data:/qdrant/storage
+
+  redis:
+    image: redis:7-alpine
+    container_name: neuralmail-redis
+    ports:
+      - "63790:6379"
+
+  minio:
+    image: minio/minio:latest
+    container_name: neuralmail-minio
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      - MINIO_ROOT_USER=minio
+      - MINIO_ROOT_PASSWORD=minio123
+    volumes:
+      - minio-data:/data
+
+volumes:
+  stalwart-data:
+  postgres-data:
+  qdrant-data:
+  minio-data:
