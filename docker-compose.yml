@@ -11,11 +11,7 @@ services:
     volumes:
       - stalwart-data:/opt/stalwart
       - ./configs/dev/stalwart.toml:/opt/stalwart/etc/config.toml:ro
-    healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:8080"]
-      interval: 10s
-      timeout: 3s
-      retries: 10
+    restart: unless-stopped
 
   cortex:
     build:
@@ -23,10 +19,17 @@ services:
       dockerfile: deploy/docker/cortex/Dockerfile
     container_name: neuralmail-cortex
     depends_on:
-      - stalwart
-      - postgres
-      - qdrant
-      - redis
+      stalwart:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+      qdrant:
+        condition: service_started
+      redis:
+        condition: service_started
+      minio:
+        condition: service_started
+    restart: unless-stopped
     ports:
       - "8088:8088"
     environment:
@@ -63,10 +66,16 @@ services:
       dockerfile: deploy/docker/cortex/Dockerfile
     container_name: neuralmail-worker
     depends_on:
-      - postgres
-      - qdrant
-      - redis
+      postgres:
+        condition: service_healthy
+      qdrant:
+        condition: service_started
+      redis:
+        condition: service_started
+      minio:
+        condition: service_started
     command: ["/app/neuralmaild", "worker"]
+    restart: unless-stopped
     environment:
       - NM_CONFIG=/etc/neuralmail/config.yaml
       - NM_DB_DSN=postgres://neuralmail:neuralmail@postgres:5432/neuralmail?sslmode=disable
@@ -90,6 +99,11 @@ services:
       - POSTGRES_PASSWORD=neuralmail
     volumes:
       - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U neuralmail -d neuralmail"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
   qdrant:
     image: qdrant/qdrant:latest
@@ -98,12 +112,14 @@ services:
       - "6333:6333"
     volumes:
       - qdrant-data:/qdrant/storage
+    restart: unless-stopped
 
   redis:
     image: redis:7-alpine
     container_name: neuralmail-redis
     ports:
       - "63790:6379"
+    restart: unless-stopped
 
   minio:
     image: minio/minio:latest
@@ -117,6 +133,7 @@ services:
       - MINIO_ROOT_PASSWORD=minio123
     volumes:
       - minio-data:/data
+    restart: unless-stopped
 
 volumes:
   stalwart-data:
