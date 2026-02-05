@@ -5,7 +5,8 @@ It enables:
 - JMAP on port 8080
 - SMTP on port 25
 - Local domain: `local.neuralmail`
-- User: `dev@local.neuralmail` / `devpass`
+- Mailbox identity: `dev@local.neuralmail`
+- JMAP auth principal: `dev` / `devpass`
 
 To boot the stack:
 ```bash

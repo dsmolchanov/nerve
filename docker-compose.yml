@@ -36,7 +36,7 @@ services:
       - NM_CONFIG=/etc/neuralmail/config.yaml
       - NM_DEV_MODE=true
       - NM_JMAP_URL=http://stalwart:8080/jmap
-      - NM_JMAP_USERNAME=dev@local.neuralmail
+      - NM_JMAP_USERNAME=dev
       - NM_JMAP_PASSWORD=devpass
       - NM_JMAP_PUSH_SECRET=devsecret
       - NM_DB_DSN=postgres://neuralmail:neuralmail@postgres:5432/neuralmail?sslmode=disable
