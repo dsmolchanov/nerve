@@ -3,19 +3,34 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Nerve — Email infrastructure built for AI agents</title>
-    <meta name="description" content="Nerve is an agent-native email runtime: programmatic inboxes, memory, and safe MCP tools. Open-source for localhost. Cloud for deliverability, security, and scale." />
-    <meta property="og:title" content="Nerve — Email infrastructure built for AI agents" />
-    <meta property="og:description" content="Open-source email agent runtime + production cloud deliverability." />
+    <title>Nerve | Email infrastructure built for AI agents</title>
+    <meta
+      name="description"
+      content="Nerve is an agent-native communication layer: programmatic inboxes, thread memory, semantic search, and workflow-grade MCP tools. Open source for localhost. Cloud for deliverability, security, and scale."
+    />
+    <meta property="og:title" content="Nerve | Email infrastructure built for AI agents" />
+    <meta
+      property="og:description"
+      content="Open-source email agent runtime plus production cloud deliverability."
+    />
     <meta property="og:image" content="assets/og.png" />
     <meta name="twitter:card" content="summary_large_image" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <div class="bg-noise"></div>
-    <header class="nav">
-      <div class="logo">Nerve</div>
-      <nav>
+    <div class="bg-gradient" aria-hidden="true"></div>
+    <div class="bg-noise" aria-hidden="true"></div>
+
+    <header class="nav" id="top">
+      <div class="brand">
+        <img src="assets/logo-nerve.svg" class="brand-logo" alt="Nerve logo" />
+        <div class="brand-copy">
+          <span class="brand-name">Nerve</span>
+          <span class="brand-domain">nerve.email</span>
+        </div>
+      </div>
+
+      <nav class="nav-links" aria-label="Primary">
         <a href="#product">Product</a>
         <a href="#open-source">Open Source</a>
         <a href="#security">Security</a>
@@ -23,102 +38,129 @@
         <a href="#pricing">Pricing</a>
         <a href="#docs">Docs</a>
       </nav>
+
       <div class="nav-cta">
         <a class="btn ghost" href="https://github.com/dmitrymolchanov/neuralmail">Self-host in 5 minutes</a>
-        <a class="btn primary" href="mailto:beta@nerve.email">Request Early Access</a>
+        <a class="btn primary" href="mailto:beta@nerve.email">Get Cloud Beta</a>
       </div>
     </header>
 
     <main>
-      <section class="hero" id="product">
-        <div class="hero-text">
+      <section class="hero" id="product" data-reveal>
+        <div class="hero-copy">
+          <p class="eyebrow">Email Agent Runtime</p>
           <h1>Email infrastructure built for AI agents.</h1>
           <p class="subhead">
-            Nerve is an agent-native communication layer: programmatic inboxes + thread memory + semantic search + workflow-grade MCP tools.
-            <strong>Open-source for localhost. Cloud for deliverability, security, and scale.</strong>
+            Nerve is an <strong>agent-native communication layer</strong>: programmatic inboxes + thread memory + semantic
+            search + workflow-grade MCP tools.
+            <strong>Open source for localhost. Cloud for deliverability, security, and scale.</strong>
           </p>
+
           <div class="cta-row">
             <a class="btn primary" href="https://github.com/dmitrymolchanov/neuralmail">Start with Open Source</a>
-            <a class="btn ghost" href="mailto:beta@nerve.email">Request Early Access</a>
+            <a class="btn ghost" href="mailto:beta@nerve.email">Request Cloud Access</a>
           </div>
-          <p class="why-now">Agents don’t need a “send email” API. They need an inbox runtime: identity, memory, safety, deterministic tools.</p>
+
+          <p class="why-now">
+            Agents do not need a "send email" API. They need an <strong>inbox runtime</strong>: identity, memory, safety, and deterministic tools.
+          </p>
         </div>
-        <div class="hero-terminal" aria-label="Terminal demo">
-          <div class="terminal-header">
+
+        <div class="hero-terminal" aria-label="Nerve terminal demo">
+          <div class="terminal-head">
             <span></span><span></span><span></span>
           </div>
-          <div class="terminal-body" id="terminal-body"></div>
+          <pre class="terminal-body" id="terminal-body"></pre>
         </div>
       </section>
 
-      <section class="pillars">
-        <div class="pillar">
-          <h3>SQLite of Email (Open Source)</h3>
-          <p>Run a full agent inbox stack locally: SMTP/IMAP/JMAP + MCP + vector memory + semantic routing.</p>
+      <section class="pillars" data-reveal>
+        <article class="card pillar">
+          <h2>1) SQLite of Email (Open Source)</h2>
+          <p><strong>Run a full agent inbox stack locally</strong>: SMTP/IMAP/JMAP + MCP + vector memory + semantic routing.</p>
           <ul>
-            <li><code>docker compose up</code> → receive and reply to real email</li>
+            <li><code>docker compose up</code> -> your agent can receive and reply to real email</li>
             <li>Local vector DB + thread store included</li>
-            <li>Easy to start, intentionally hard to scale deliverably</li>
+            <li>Designed to be easy to start, intentionally hard to scale deliverably</li>
           </ul>
-        </div>
-        <div class="pillar">
-          <h3>MCP‑first, not MCP‑wrapped</h3>
-          <p>Most MCP email servers are thin wrappers. Nerve ships workflow‑grade tools so you ship agents faster.</p>
+        </article>
+
+        <article class="card pillar">
+          <h2>2) MCP-first, not MCP-wrapped</h2>
+          <p>
+            Most MCP email servers are thin wrappers around IMAP/Gmail: you still build routing, storage, parsing, safety, and retries.
+            Nerve exposes <strong>workflow-grade tools</strong> so you ship agents faster.
+          </p>
           <pre><code>triage_message()
 extract_to_schema()
 draft_reply_with_policy()</code></pre>
-        </div>
-        <div class="pillar">
-          <h3>Production Cloud = deliverability + safety + observability</h3>
-          <p>When you go live, Nerve Cloud handles the hard parts:</p>
+        </article>
+
+        <article class="card pillar">
+          <h2>3) Production Cloud = deliverability + safety + observability</h2>
+          <p>When you go live, Nerve Cloud handles what self-hosting cannot:</p>
           <ul>
-            <li>Reputation pools + warm-up gates</li>
-            <li>Scoped tokens + audit logs</li>
-            <li>HA storage + retention</li>
+            <li>Deliverability control plane (reputation pools + warm-up gates)</li>
+            <li>Secure hosted MCP (scoped tokens, audit logs, signed SDKs)</li>
+            <li>Thread storage + memory retention with HA + backups</li>
           </ul>
-        </div>
+        </article>
       </section>
 
-      <section class="how" id="open-source">
+      <section class="how" id="open-source" data-reveal>
         <h2>How it works</h2>
-        <div class="steps">
-          <div class="step">
-            <h4>Create an inbox</h4>
-            <p>Spin up an ephemeral inbox per agent with TTLs, labels, and lifecycle states.</p>
-          </div>
-          <div class="step">
-            <h4>Nerve stores thread + memory</h4>
+        <ol class="steps">
+          <li>
+            <h3>Create an inbox</h3>
+            <p>Spin up an ephemeral inbox per agent (TTL, labels, custom domain when ready).</p>
+          </li>
+          <li>
+            <h3>Nerve stores the thread + memory</h3>
             <p>Every message is threaded, summarized, chunked, and embedded automatically.</p>
-          </div>
-          <div class="step">
-            <h4>Agents act through safe MCP tools</h4>
-            <p>Search, triage, extract, draft, and reply—without glue code or fragile parsing.</p>
-          </div>
-        </div>
+          </li>
+          <li>
+            <h3>Agents act through safe MCP tools</h3>
+            <p>Search, triage, extract, draft, and reply without glue code or fragile parsing.</p>
+          </li>
+        </ol>
       </section>
 
-      <section class="features">
+      <section class="workflows" data-reveal>
         <h2>Built for agent workflows (not human mailboxes)</h2>
-        <div class="feature-grid">
-          <div>
-            <h4>Programmatic identities</h4>
-            <p>Create/destroy inboxes in milliseconds. TTL inboxes for one-off tasks.</p>
-          </div>
-          <div>
-            <h4>Stateful threads</h4>
-            <p>Thread-first storage, attachments, and automatic summaries.</p>
-          </div>
-          <div>
-            <h4>Vectorized memory</h4>
-            <p>Semantic search across threads so you only pull what matters.</p>
-          </div>
+        <div class="grid three">
+          <article class="card">
+            <h3>Programmatic identities (ephemeral by default)</h3>
+            <ul>
+              <li>Create/destroy inboxes in milliseconds</li>
+              <li>TTL inboxes for one-off tasks (negotiation, verification, handoffs)</li>
+              <li>Labels and lifecycle states (open, pending human, closed)</li>
+            </ul>
+          </article>
+
+          <article class="card">
+            <h3>Stateful threads (real inbox semantics)</h3>
+            <ul>
+              <li>Thread-first storage (not stateless webhooks)</li>
+              <li>Attachments supported</li>
+              <li>Automatic thread summaries to save context tokens</li>
+            </ul>
+          </article>
+
+          <article class="card">
+            <h3>Vectorized inbox memory (RAG built in)</h3>
+            <ul>
+              <li>Semantic search across messages and threads</li>
+              <li>Retrieve what matters instead of dumping full histories</li>
+              <li>Works locally (dev) and scales in cloud (prod)</li>
+            </ul>
+          </article>
         </div>
       </section>
 
-      <section class="mcp">
-        <h2>The MCP surface</h2>
-        <p class="muted">Keep it small. Keep it reliable.</p>
-        <div class="tool-grid">
+      <section class="mcp" data-reveal>
+        <h2>The MCP surface (what developers actually want)</h2>
+        <p class="muted"><strong>Keep it small. Keep it reliable.</strong></p>
+        <div class="tool-grid" aria-label="MCP tools">
           <span>list_threads</span>
           <span>get_thread</span>
           <span>search_inbox</span>
@@ -127,92 +169,171 @@ draft_reply_with_policy()</code></pre>
           <span>draft_reply_with_policy</span>
           <span>send_reply</span>
         </div>
-        <p class="muted">Moat: your MCP server isn’t email access — it’s agent-grade operations.</p>
+        <p class="muted">Why this is a moat: your MCP server is not email access. It is agent-grade operations.</p>
       </section>
 
-      <section class="security" id="security">
-        <h2>Security & governance</h2>
-        <div class="feature-grid">
-          <div>
-            <h4>Secure by default</h4>
-            <p>Scoped tokens, outbound off by default, allowlists, and rate shaping.</p>
-          </div>
-          <div>
-            <h4>Auditable actions</h4>
-            <p>Every tool call logged with inputs, outputs, time, and identity.</p>
-          </div>
-          <div>
-            <h4>Prompt-injection hygiene</h4>
-            <p>Structured tool outputs and policy enforcement for safety.</p>
-          </div>
+      <section class="security" id="security" data-reveal>
+        <h2>Security and governance (a real moat, not marketing)</h2>
+        <div class="grid three">
+          <article class="card">
+            <h3>Secure by default for autonomous systems</h3>
+            <ul>
+              <li>Scoped tokens (tool-level + inbox-level permissions)</li>
+              <li>Outbound off by default (enable replies only, then expand)</li>
+              <li>Allowlists and rate shaping to prevent rogue agent incidents</li>
+            </ul>
+          </article>
+
+          <article class="card">
+            <h3>Auditable actions</h3>
+            <ul>
+              <li>Every tool call logged with inputs/outputs, time, and identity</li>
+              <li>Replays for debugging: why did the agent reply this way?</li>
+            </ul>
+          </article>
+
+          <article class="card">
+            <h3>Prompt-injection hygiene</h3>
+            <ul>
+              <li>Safe tool outputs (structured, sanitized)</li>
+              <li>Risk flags for exfiltration or instruction hijacking attempts</li>
+              <li>Policy enforcement (never promise refunds &gt; $X)</li>
+            </ul>
+          </article>
         </div>
       </section>
 
-      <section class="deliverability">
+      <section class="deliverability" data-reveal>
         <h2>Deliverability: the difference between demos and production</h2>
-        <p>Shared sandbox pool → graduation gates → premium pools. Domain onboarding guidance, throttling profiles, and abuse controls.</p>
+        <article class="card">
+          <h3>Nerve Cloud deliverability engine</h3>
+          <ul>
+            <li>Shared sandbox pool -> graduation gates -> premium pools</li>
+            <li>Reputation scoring and abuse controls</li>
+            <li>Domain onboarding (SPF/DKIM/DMARC guidance + checks)</li>
+            <li>Throttling profiles tuned for conversational traffic</li>
+          </ul>
+          <p class="muted">Moat: agent email fails without deliverability and anti-abuse. We productize it.</p>
+        </article>
       </section>
 
-      <section class="use-cases" id="use-cases">
-        <h2>Use cases</h2>
-        <div class="feature-grid">
-          <div>
-            <h4>Support Inbox Autopilot (v1)</h4>
-            <p>Triage, extract account context, draft replies, and escalate when uncertain.</p>
-          </div>
-          <div>
-            <h4>Invoices / AP intake (v2)</h4>
-            <p>Extract line items and export structured data to your ERP.</p>
-          </div>
-          <div>
-            <h4>Agent coordination (later)</h4>
-            <p>Task-specific inboxes for multi-agent handoffs.</p>
-          </div>
+      <section class="tunnel" data-reveal>
+        <h2>Localhost tunneling (developer magic)</h2>
+        <article class="card">
+          <p><strong>Test with real email in minutes, no DNS ceremony.</strong></p>
+          <ul>
+            <li>Generate a dev inbox address</li>
+            <li>Receive inbound mail into your local stack through a secure tunnel</li>
+            <li>Iterate on agent behavior without deploying infrastructure</li>
+          </ul>
+          <p class="muted">Fastest path from idea to live agent loop.</p>
+        </article>
+      </section>
+
+      <section class="use-cases" id="use-cases" data-reveal>
+        <h2>Use cases (start narrow, win hard)</h2>
+        <div class="grid three">
+          <article class="card">
+            <h3>Support Inbox Autopilot (v1 wedge)</h3>
+            <ul>
+              <li>Triage incoming tickets</li>
+              <li>Extract account + plan + product area + error signals</li>
+              <li>Draft replies under policy</li>
+              <li>Escalate when uncertain (human approval queue)</li>
+            </ul>
+          </article>
+
+          <article class="card">
+            <h3>Invoices / AP intake (v2 pack)</h3>
+            <ul>
+              <li>Extract invoice fields and line items from email + attachments</li>
+              <li>Output validated JSON to your ERP or workflow tool</li>
+            </ul>
+          </article>
+
+          <article class="card">
+            <h3>Agent coordination (later)</h3>
+            <ul>
+              <li>Task-specific inboxes for multi-agent handoffs and external communication</li>
+            </ul>
+          </article>
         </div>
       </section>
 
-      <section class="oss-vs-cloud">
-        <h2>Open Source vs Cloud</h2>
-        <div class="feature-grid">
-          <div>
-            <h4>Open Source</h4>
-            <p>Local development, prototypes, teams that can operate mail infra.</p>
-          </div>
-          <div>
-            <h4>Cloud</h4>
-            <p>Deliverability, reliability, auditing, and secure hosted MCP.</p>
-          </div>
+      <section class="compare" data-reveal>
+        <h2>Open Source vs Cloud (clear, honest)</h2>
+        <div class="grid two">
+          <article class="card">
+            <h3>Open Source</h3>
+            <p>For local development, prototypes, and teams who can operate mail infra + deliverability themselves.</p>
+            <p class="muted">Includes mail server + MCP + vector memory + semantic routing primitives.</p>
+          </article>
+
+          <article class="card">
+            <h3>Cloud</h3>
+            <p>For customer-facing workloads and teams that need deliverability, reliability, and auditing.</p>
+            <p class="muted">Includes reputation pools, outbound controls, HA storage, secure hosted MCP + governance.</p>
+          </article>
         </div>
       </section>
 
-      <section class="pricing" id="pricing">
+      <section class="pricing" id="pricing" data-reveal>
         <h2>Pricing</h2>
-        <p>Pay for what costs money and saves time: identities, processing, memory retention.</p>
+        <p><strong>Pay for what costs money and saves time: identities + processing + memory.</strong></p>
+        <ul class="pricing-list">
+          <li>Free tier for builders</li>
+          <li>Pro tier for production inboxes + custom domains + longer memory</li>
+          <li>Enterprise for dedicated pools, SLAs, and compliance posture</li>
+        </ul>
         <div class="cta-row">
           <a class="btn ghost" href="#">See pricing</a>
           <a class="btn primary" href="mailto:beta@nerve.email">Talk to us</a>
         </div>
       </section>
 
-      <section class="faq">
-        <h2>FAQ</h2>
-        <div class="faq-item">
-          <h4>Can I self-host everything?</h4>
-          <p>Yes. The open-source core runs locally and can be deployed anywhere.</p>
-        </div>
-        <div class="faq-item">
-          <h4>Is this just another email MCP server?</h4>
-          <p>No. Nerve is a runtime: threads, memory, triage, extraction, policy drafting.</p>
-        </div>
-        <div class="faq-item">
-          <h4>Do you support custom domains?</h4>
-          <p>Yes on Cloud (and self-host obviously). Local dev works via tunneling later.</p>
+      <section class="trust" data-reveal>
+        <h2>Built for trust</h2>
+        <div class="trust-strip" aria-label="Trust statements">
+          <span>Built for agent builders</span>
+          <span>Open source core</span>
+          <span>Secure MCP by design</span>
+          <span>Deliverability-first cloud</span>
         </div>
       </section>
 
-      <section class="footer" id="docs">
-        <p>Docs: see the GitHub repo for architecture and MCP contracts.</p>
-        <a class="btn primary" href="https://github.com/dmitrymolchanov/neuralmail">Open Source Repo</a>
+      <section class="faq" data-reveal>
+        <h2>FAQ</h2>
+        <article class="faq-item">
+          <h3>Can I self-host everything?</h3>
+          <p>Yes. The open-source core runs locally and can be deployed anywhere. Production deliverability is why the cloud exists.</p>
+        </article>
+        <article class="faq-item">
+          <h3>Is this just another email MCP server?</h3>
+          <p>No. Nerve is an agent runtime: threads, memory, triage, extraction, policy drafting, so you do not build glue.</p>
+        </article>
+        <article class="faq-item">
+          <h3>Do you support custom domains?</h3>
+          <p>Yes on Cloud (and self-host). Local dev also works via tunneling.</p>
+        </article>
+        <article class="faq-item">
+          <h3>What models do you use for triage/extraction?</h3>
+          <p>Bring-your-own-model is supported in the self-hosted engine. Cloud offers managed defaults and tuning.</p>
+        </article>
+        <article class="faq-item">
+          <h3>How do you prevent abuse/spam?</h3>
+          <p>Outbound is gated, reputation is segmented, and policies + allowlists are default.</p>
+        </article>
+      </section>
+
+      <section class="positioning" id="docs" data-reveal>
+        <h2>One-line positioning</h2>
+        <p>
+          <strong>Nerve:</strong> the open-source Email Agent Runtime + production cloud deliverability. MCP-native tools, stateful memory, and safety you can audit.
+        </p>
+        <div class="cta-row">
+          <a class="btn primary" href="https://github.com/dmitrymolchanov/neuralmail">Open Source Repo</a>
+          <a class="btn ghost" href="mailto:beta@nerve.email">beta@nerve.email</a>
+        </div>
       </section>
     </main>
 
