@@ -6,6 +6,11 @@ make seed
 make mcp-test
 ```
 
+The Make targets default to `configs/dev/host.yaml` (localhost ports). To use another config:
+```bash
+CONFIG=configs/dev/cortex.yaml make seed
+```
+
 Open:
 - `http://localhost:8088/healthz`
 - `http://localhost:8088/debug`
