@@ -1,0 +1,59 @@
+services:
+  runtime:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/cortex/Dockerfile
+    command: ["/app/neuralmaild", "serve"]
+    env_file:
+      - .env
+    environment:
+      - NM_CLOUD_MODE=true
+    ports:
+      - "8088:8088"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      qdrant:
+        condition: service_started
+
+  control-plane:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/cortex/Dockerfile
+    command: ["/app/nerve-control-plane"]
+    env_file:
+      - .env
+    environment:
+      - NM_CLOUD_MODE=true
+      - NM_HTTP_ADDR=:8090
+    ports:
+      - "8090:8090"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_DB=neuralmail
+      - POSTGRES_USER=neuralmail
+      - POSTGRES_PASSWORD=neuralmail
+    ports:
+      - "54320:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U neuralmail -d neuralmail"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "63790:6379"
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    ports:
+      - "6333:6333"

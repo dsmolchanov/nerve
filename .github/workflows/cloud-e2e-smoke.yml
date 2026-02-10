@@ -1,0 +1,113 @@
+name: cloud-e2e-smoke
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 9 * * *"
+
+jobs:
+  cloud-e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+
+      - name: Prepare Cloud Env
+        run: |
+          cp deploy/cloud/env.example deploy/cloud/.env
+          {
+            echo "NM_DEV_MODE=false"
+            echo "NM_HTTP_ADDR=:8088"
+            echo "NM_STRIPE_WEBHOOK_SECRET="
+            echo "NM_SMTP_HOST=localhost"
+            echo "NM_SMTP_PORT=2525"
+            echo "NM_JMAP_URL=http://localhost:8080/jmap"
+          } >> deploy/cloud/.env
+
+      - name: Start Cloud Stack
+        run: |
+          docker compose -f deploy/cloud/docker-compose.cloud.yml up -d --build
+          for i in $(seq 1 60); do
+            if curl -sf http://127.0.0.1:8090/healthz >/dev/null; then
+              break
+            fi
+            sleep 2
+            if [ "$i" -eq 60 ]; then
+              docker compose -f deploy/cloud/docker-compose.cloud.yml logs
+              exit 1
+            fi
+          done
+
+      - name: Seed Plan And Org
+        run: |
+          docker compose -f deploy/cloud/docker-compose.cloud.yml exec -T postgres \
+            psql -U neuralmail -d neuralmail -c "INSERT INTO plan_entitlements (plan_code, mcp_rpm, monthly_units, max_inboxes) VALUES ('pro', 1000, 1000, 10) ON CONFLICT (plan_code) DO NOTHING;"
+          ORG_ID=$(docker compose -f deploy/cloud/docker-compose.cloud.yml exec -T postgres \
+            psql -U neuralmail -d neuralmail -tAc "INSERT INTO orgs (name) VALUES ('cloud-smoke') RETURNING id;")
+          echo "ORG_ID=$(echo "$ORG_ID" | tr -d '[:space:]')" >> "$GITHUB_ENV"
+
+      - name: Simulate Activation Webhook
+        run: |
+          curl -sf -X POST http://127.0.0.1:8090/v1/billing/webhook/stripe \
+            -H "Content-Type: application/json" \
+            --data "{\"id\":\"evt_smoke_activate\",\"type\":\"customer.subscription.updated\",\"data\":{\"object\":{\"id\":\"sub_smoke\",\"customer\":\"cus_smoke\",\"status\":\"active\",\"current_period_start\":1700000000,\"current_period_end\":1999999999,\"cancel_at_period_end\":false,\"metadata\":{\"org_id\":\"$ORG_ID\"},\"items\":{\"data\":[{\"price\":{\"lookup_key\":\"pro\",\"id\":\"price_pro\"}}]}}}}"
+
+      - name: Mint Service Token
+        run: |
+          TOKEN_RESPONSE=$(curl -sf -X POST http://127.0.0.1:8090/v1/tokens/service \
+            -H "Content-Type: application/json" \
+            -H "X-API-Key: bootstrap_admin_api_key" \
+            --data "{\"org_id\":\"$ORG_ID\",\"scopes\":[\"nerve:email.read\"],\"ttl_seconds\":900}")
+          echo "SERVICE_TOKEN=$(echo "$TOKEN_RESPONSE" | jq -r '.token')" >> "$GITHUB_ENV"
+
+      - name: MCP Initialize And Tool Call
+        run: |
+          INIT=$(curl -sf -X POST http://127.0.0.1:8088/mcp \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $SERVICE_TOKEN" \
+            --data '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}')
+          SESSION_ID=$(echo "$INIT" | jq -r '.result | .serverInfo | .name' >/dev/null; curl -si -X POST http://127.0.0.1:8088/mcp \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $SERVICE_TOKEN" \
+            --data '{"jsonrpc":"2.0","id":2,"method":"initialize","params":{}}' | awk -F': ' '/MCP-Session-Id/ {print $2}' | tr -d '\r')
+          INBOX_ID=$(docker compose -f deploy/cloud/docker-compose.cloud.yml exec -T postgres \
+            psql -U neuralmail -d neuralmail -tAc "INSERT INTO inboxes (org_id, address, status) VALUES ('$ORG_ID','smoke@local.neuralmail','active') RETURNING id;")
+          INBOX_ID=$(echo "$INBOX_ID" | tr -d '[:space:]')
+          curl -sf -X POST http://127.0.0.1:8088/mcp \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $SERVICE_TOKEN" \
+            -H "MCP-Session-Id: $SESSION_ID" \
+            --data "{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"tools/call\",\"params\":{\"name\":\"list_threads\",\"arguments\":{\"inbox_id\":\"$INBOX_ID\",\"limit\":1}}}"
+
+      - name: Assert Usage Increment
+        run: |
+          USED=$(docker compose -f deploy/cloud/docker-compose.cloud.yml exec -T postgres \
+            psql -U neuralmail -d neuralmail -tAc "SELECT coalesce(sum(used),0) FROM org_usage_counters WHERE org_id='$ORG_ID' AND meter_name='mcp_units';")
+          USED=$(echo "$USED" | tr -d '[:space:]')
+          test "$USED" != "0"
+
+      - name: Simulate Deactivation And Assert Blocked
+        run: |
+          curl -sf -X POST http://127.0.0.1:8090/v1/billing/webhook/stripe \
+            -H "Content-Type: application/json" \
+            --data "{\"id\":\"evt_smoke_cancel\",\"type\":\"customer.subscription.deleted\",\"data\":{\"object\":{\"id\":\"sub_smoke\",\"customer\":\"cus_smoke\",\"status\":\"canceled\",\"current_period_start\":1600000000,\"current_period_end\":1600003600,\"cancel_at_period_end\":true,\"metadata\":{\"org_id\":\"$ORG_ID\"},\"items\":{\"data\":[{\"price\":{\"lookup_key\":\"pro\",\"id\":\"price_pro\"}}]}}}}"
+          SESSION_ID=$(curl -si -X POST http://127.0.0.1:8088/mcp \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $SERVICE_TOKEN" \
+            --data '{"jsonrpc":"2.0","id":4,"method":"initialize","params":{}}' | awk -F': ' '/MCP-Session-Id/ {print $2}' | tr -d '\r')
+          RESPONSE=$(curl -sf -X POST http://127.0.0.1:8088/mcp \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $SERVICE_TOKEN" \
+            -H "MCP-Session-Id: $SESSION_ID" \
+            --data '{"jsonrpc":"2.0","id":5,"method":"tools/call","params":{"name":"list_threads","arguments":{"inbox_id":"missing","limit":1}}}')
+          CODE=$(echo "$RESPONSE" | jq -r '.error.code')
+          test "$CODE" = "-32041"
+
+      - name: Stop Stack
+        if: always()
+        run: docker compose -f deploy/cloud/docker-compose.cloud.yml down -v
