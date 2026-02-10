@@ -4,3 +4,8 @@
 .env
 *.log
 coverage.out
+
+# Node / Next.js
+node_modules/
+.next/
+.env.local
