@@ -1,0 +1,53 @@
+name: cloud-e2e-matrix
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+
+jobs:
+  cloud-e2e:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: neuralmail
+          POSTGRES_PASSWORD: neuralmail
+          POSTGRES_DB: postgres
+        ports:
+          - 54320:5432
+        options: >-
+          --health-cmd="pg_isready -U neuralmail -d postgres"
+          --health-interval=5s
+          --health-timeout=3s
+          --health-retries=20
+
+    env:
+      NM_TEST_DB_DSN: postgres://neuralmail:neuralmail@127.0.0.1:54320/postgres?sslmode=disable
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+
+      - name: Wait for Postgres
+        run: |
+          for i in $(seq 1 30); do
+            if (echo > /dev/tcp/127.0.0.1/54320) >/dev/null 2>&1; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "postgres did not start in time"
+          exit 1
+
+      - name: Run Cloud E2E Matrix
+        run: make cloud-e2e-test
