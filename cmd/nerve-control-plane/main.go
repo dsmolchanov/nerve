@@ -37,7 +37,7 @@ func main() {
 
 	authSvc := auth.NewService(cfg, st)
 	billingSvc := billing.NewStripeService(cfg, st)
-	tokenSvc := cloudapi.NewTokenService(st)
+	tokenSvc := cloudapi.NewTokenService(st, cfg.Security.TokenSigningKey)
 	handler := cloudapi.NewHandler(cfg, st, authSvc, billingSvc, tokenSvc)
 
 	mux := http.NewServeMux()
