@@ -1,0 +1,24 @@
+FROM golang:1.23-alpine AS build
+
+WORKDIR /src
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build -o /out/nerve-control-plane ./cmd/nerve-control-plane
+
+FROM alpine:3.20
+
+RUN apk add --no-cache ca-certificates \
+ && addgroup -S nerve && adduser -S nerve -G nerve
+
+USER nerve
+WORKDIR /app
+
+COPY --from=build /out/nerve-control-plane /app/nerve-control-plane
+COPY configs /app/configs
+COPY internal/store/migrations /app/internal/store/migrations
+
+EXPOSE 8090
+ENTRYPOINT ["/app/nerve-control-plane"]
