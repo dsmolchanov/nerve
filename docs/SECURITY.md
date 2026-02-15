@@ -39,6 +39,10 @@
   - High-privilege operation; requires `nerve:admin.billing` or bootstrap admin API key.
   - Enforces short TTL (maximum 1 hour) and explicit scope list.
   - Issuance metadata is written to audit logs.
+- `POST /v1/keys`, `GET /v1/keys`, `DELETE /v1/keys/{id}`:
+  - Requires `nerve:admin.billing` or bootstrap admin API key.
+  - Stores only key hash (never raw key) in `cloud_api_keys`.
+  - Raw key is returned only once at creation time.
 
 ## Reporting
 Please report security issues to `security@nerve.email`.

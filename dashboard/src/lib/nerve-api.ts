@@ -41,6 +41,30 @@ export async function createOrg(name: string): Promise<{ org_id: string }> {
   });
 }
 
+export interface OrgRuntimeConfig {
+  org_id: string;
+  mcp_endpoint: string;
+}
+
+export async function getOrgRuntimeConfig(
+  orgId: string,
+): Promise<OrgRuntimeConfig> {
+  return nerveRequest(`/v1/orgs/runtime?org_id=${encodeURIComponent(orgId)}`);
+}
+
+export async function updateOrgRuntimeConfig(
+  orgId: string,
+  mcpEndpoint: string,
+): Promise<OrgRuntimeConfig> {
+  return nerveRequest("/v1/orgs/runtime", {
+    method: "PUT",
+    body: JSON.stringify({
+      org_id: orgId,
+      mcp_endpoint: mcpEndpoint,
+    }),
+  });
+}
+
 // ── Subscriptions ──────────────────────────────────────────────
 
 export interface Subscription {
@@ -83,6 +107,52 @@ export async function createBillingPortal(
     method: "POST",
     body: JSON.stringify({ org_id: orgId }),
   });
+}
+
+// ── Cloud API keys ────────────────────────────────────────────
+
+export interface CloudApiKey {
+  id: string;
+  key_prefix: string;
+  label: string;
+  scopes: string[];
+  created_at: string;
+  revoked_at?: string;
+}
+
+export interface CreatedCloudApiKey extends CloudApiKey {
+  key: string;
+}
+
+export async function createCloudApiKey(
+  orgId: string,
+  scopes: string[],
+  label = "",
+): Promise<CreatedCloudApiKey> {
+  return nerveRequest("/v1/keys", {
+    method: "POST",
+    body: JSON.stringify({
+      org_id: orgId,
+      scopes,
+      label,
+    }),
+  });
+}
+
+export async function listCloudApiKeys(
+  orgId: string,
+): Promise<{ keys: CloudApiKey[] }> {
+  return nerveRequest(`/v1/keys?org_id=${encodeURIComponent(orgId)}`);
+}
+
+export async function revokeCloudApiKey(
+  orgId: string,
+  keyId: string,
+): Promise<{ status: string }> {
+  return nerveRequest(
+    `/v1/keys/${encodeURIComponent(keyId)}?org_id=${encodeURIComponent(orgId)}`,
+    { method: "DELETE" },
+  );
 }
 
 // ── Service tokens ─────────────────────────────────────────────

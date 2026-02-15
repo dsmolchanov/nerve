@@ -33,3 +33,74 @@ body {
   color: var(--ink);
   font-family: var(--font-body), system-ui, sans-serif;
 }
+
+.brand-lockup {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.brand-mark {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  overflow: hidden;
+  transform: translateZ(0);
+}
+
+.brand-mark-media {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.brand-mark-animated {
+  animation: brandFloat 3.6s ease-in-out infinite;
+}
+
+.brand-mark-animated::after {
+  content: "";
+  position: absolute;
+  inset: -14%;
+  border-radius: 20px;
+  background: radial-gradient(
+    circle at 65% 35%,
+    rgba(58, 188, 255, 0.46),
+    rgba(31, 109, 235, 0) 62%
+  );
+  filter: blur(8px);
+  opacity: 0.6;
+  pointer-events: none;
+  z-index: -1;
+  animation: brandGlow 2.8s ease-in-out infinite;
+}
+
+@keyframes brandFloat {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -2px, 0);
+  }
+}
+
+@keyframes brandGlow {
+  0%,
+  100% {
+    opacity: 0.42;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brand-mark-animated,
+  .brand-mark-animated::after {
+    animation: none;
+  }
+}

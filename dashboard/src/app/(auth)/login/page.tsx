@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
+import { BrandLogo } from "@/components/brand-logo";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -45,12 +45,7 @@ export default function LoginPage() {
   return (
     <div className="flex flex-col items-center gap-8">
       {/* Brand */}
-      <div className="flex items-center gap-3">
-        <Image src="/logo-nerve.svg" alt="Nerve" width={44} height={44} />
-        <span className="font-heading text-2xl font-semibold text-ink">
-          Nerve
-        </span>
-      </div>
+      <BrandLogo />
 
       <div className="w-full rounded-2xl border border-line bg-card p-8 shadow-sm">
         <h1 className="font-heading text-xl font-semibold text-ink text-center mb-6">
