@@ -8,6 +8,7 @@ const AVAILABLE_SCOPES = [
   { value: "nerve:email.search", label: "Search emails" },
   { value: "nerve:email.draft", label: "Draft emails" },
   { value: "nerve:email.send", label: "Send emails" },
+  { value: "nerve:email.inbox.create", label: "Create inboxes" },
 ] as const;
 
 const FALLBACK_MCP_ENDPOINT =

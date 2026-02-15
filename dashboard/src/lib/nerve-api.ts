@@ -259,3 +259,44 @@ export async function deleteOrgDomain(
     { method: "DELETE" },
   );
 }
+
+// ── Inboxes ────────────────────────────────────────────────────
+
+export interface Inbox {
+  id: string;
+  address: string;
+  status: string;
+  org_domain_id?: string;
+  created_at: string;
+}
+
+export async function createInbox(
+  orgId: string,
+  address: string,
+  domainId = "",
+): Promise<{ inbox: Inbox }> {
+  return nerveRequest("/v1/inboxes", {
+    method: "POST",
+    body: JSON.stringify({
+      org_id: orgId,
+      address,
+      domain_id: domainId || undefined,
+    }),
+  });
+}
+
+export async function listInboxes(
+  orgId: string,
+): Promise<{ inboxes: Inbox[] }> {
+  return nerveRequest(`/v1/inboxes?org_id=${encodeURIComponent(orgId)}`);
+}
+
+export async function deleteInbox(
+  orgId: string,
+  inboxId: string,
+): Promise<{ status: string }> {
+  return nerveRequest(
+    `/v1/inboxes/${encodeURIComponent(inboxId)}?org_id=${encodeURIComponent(orgId)}`,
+    { method: "DELETE" },
+  );
+}

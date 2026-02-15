@@ -7,11 +7,15 @@ Usage:
     async with NerveAdmin(base_url="https://nerve.example.com", api_key="nerve_sk_...") as admin:
         # Domain management
         domain = await admin.add_domain(org_id="org_123", domain="clientclinic.com")
-        dns_records = await admin.get_dns_records(domain_id=domain["domain_id"])
-        result = await admin.verify_domain(domain_id=domain["domain_id"])
+        dns_records = await admin.get_dns_records(org_id="org_123", domain_id=domain["domain"]["id"])
+        result = await admin.verify_domain(org_id="org_123", domain_id=domain["domain"]["id"])
 
         # Inbox management
-        inbox = await admin.create_inbox(org_id="org_123", address="support@clientclinic.com")
+        inbox = await admin.create_inbox(
+            org_id="org_123",
+            address="support@clientclinic.com",
+            domain_id=domain["domain"]["id"],
+        )
 
         # Issue long-lived cloud API key for agent access
         key = await admin.issue_cloud_api_key(org_id="org_123", label="plaintalk-agent")
@@ -92,34 +96,43 @@ class NerveAdmin:
             json={"org_id": org_id, "domain": domain, "dkim_method": dkim_method},
         )
 
-    async def list_domains(self, org_id: str) -> List[Dict[str, Any]]:
+    async def list_domains(self, org_id: str) -> Dict[str, Any]:
         return await self._request("GET", "/v1/domains", params={"org_id": org_id})
 
-    async def verify_domain(self, domain_id: str) -> Dict[str, Any]:
+    async def verify_domain(self, org_id: str, domain_id: str) -> Dict[str, Any]:
         """Trigger DNS verification for a domain. Rate-limited to 3/min/domain."""
         return await self._request(
-            "POST", "/v1/domains/verify", json={"domain_id": domain_id}
+            "POST", "/v1/domains/verify", json={"org_id": org_id, "domain_id": domain_id}
         )
 
-    async def get_dns_records(self, domain_id: str) -> Dict[str, Any]:
+    async def get_dns_records(self, org_id: str, domain_id: str) -> Dict[str, Any]:
         """Get the DNS records a tenant needs to configure."""
         return await self._request(
-            "GET", "/v1/domains/dns", params={"domain_id": domain_id}
+            "GET", "/v1/domains/dns", params={"org_id": org_id, "domain_id": domain_id}
         )
 
-    async def delete_domain(self, domain_id: str) -> None:
-        await self._request(
-            "POST", "/v1/domains/delete", json={"domain_id": domain_id}
-        )
+    async def delete_domain(self, org_id: str, domain_id: str) -> Dict[str, Any]:
+        return await self._request("DELETE", f"/v1/domains/{domain_id}", params={"org_id": org_id})
 
     # ------------------------------------------------------------------
     # Inbox management
     # ------------------------------------------------------------------
 
-    async def create_inbox(self, org_id: str, address: str) -> Dict[str, Any]:
+    async def create_inbox(self, org_id: str, address: str, domain_id: str = "") -> Dict[str, Any]:
         """Create an inbox on a verified domain (e.g., support@clientclinic.com)."""
+        payload: Dict[str, Any] = {"org_id": org_id, "address": address}
+        if domain_id:
+            payload["domain_id"] = domain_id
         return await self._request(
-            "POST", "/v1/inboxes", json={"org_id": org_id, "address": address}
+            "POST", "/v1/inboxes", json=payload
+        )
+
+    async def list_inboxes(self, org_id: str) -> Dict[str, Any]:
+        return await self._request("GET", "/v1/inboxes", params={"org_id": org_id})
+
+    async def delete_inbox(self, org_id: str, inbox_id: str) -> Dict[str, Any]:
+        return await self._request(
+            "DELETE", f"/v1/inboxes/{inbox_id}", params={"org_id": org_id}
         )
 
     # ------------------------------------------------------------------
@@ -140,8 +153,7 @@ class NerveAdmin:
         Returns dict with 'key' (the API key string) and 'key_id'.
         """
         payload: Dict[str, Any] = {"org_id": org_id, "label": label}
-        if scopes:
-            payload["scopes"] = scopes
+        payload["scopes"] = scopes if scopes is not None else ["nerve:email.read"]
         return await self._request("POST", "/v1/keys", json=payload)
 
     async def issue_service_token(

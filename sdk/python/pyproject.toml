@@ -18,3 +18,8 @@ dev = [
 [build-system]
 requires = ["setuptools>=68.0"]
 build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+markers = [
+    "integration: tests that require a live Nerve server",
+]

@@ -5,6 +5,7 @@ Run against a live Nerve instance to detect schema drift early.
 Prevents the SDK from advertising tool parameters that the server
 doesn't actually support (or vice versa).
 """
+import os
 import pytest
 
 from nerve_email import NerveClient
@@ -15,9 +16,12 @@ from nerve_email.tools import NERVE_TOOLS
 @pytest.mark.integration  # Only runs against live Nerve
 async def test_static_tools_match_server():
     """Static tool definitions must match what the server advertises."""
+    if os.getenv("NERVE_SDK_INTEGRATION") != "1":
+        pytest.skip("Integration test (set NERVE_SDK_INTEGRATION=1 to run)")
+
     async with NerveClient(
-        base_url="http://localhost:8088",
-        api_key="test-api-key",
+        base_url=os.getenv("NERVE_SDK_BASE_URL", "http://localhost:8088"),
+        api_key=os.getenv("NERVE_SDK_API_KEY", "test-api-key"),
     ) as client:
         server_tools = await client.list_tools()
         server_names = {t["name"] for t in server_tools}
