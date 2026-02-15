@@ -1,0 +1,27 @@
+.git
+.gitignore
+.DS_Store
+
+# Local dev / editor / agent
+.claude
+.vscode
+
+# Secrets / local env
+.env
+.env.*
+
+# Frontend build artifacts and deps (not needed for Go images)
+**/node_modules
+**/.next
+**/.turbo
+**/.vercel
+
+# Repo folders not needed for Go server builds
+dashboard
+site
+thoughts
+docs
+
+# Misc
+*.log
+coverage.out

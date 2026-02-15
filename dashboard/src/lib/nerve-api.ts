@@ -183,3 +183,79 @@ export async function issueServiceToken(
     }),
   });
 }
+
+// ── Domains ────────────────────────────────────────────────────
+
+export interface DNSRecord {
+  type: string;
+  host: string;
+  value: string;
+  priority?: number;
+  purpose: string;
+  required: boolean;
+}
+
+export interface OrgDomain {
+  id: string;
+  domain: string;
+  status: string;
+  verification_token?: string;
+  dns_records?: DNSRecord[];
+  mx_verified: boolean;
+  spf_verified: boolean;
+  dkim_verified: boolean;
+  dmarc_verified: boolean;
+  inbound_enabled: boolean;
+  dkim_selector: string;
+  dkim_method: string;
+  last_check_at?: string;
+  verified_at?: string;
+  expires_at?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export async function createOrgDomain(
+  orgId: string,
+  domain: string,
+): Promise<{ domain: OrgDomain }> {
+  return nerveRequest("/v1/domains", {
+    method: "POST",
+    body: JSON.stringify({ org_id: orgId, domain }),
+  });
+}
+
+export async function listOrgDomains(
+  orgId: string,
+): Promise<{ domains: OrgDomain[] }> {
+  return nerveRequest(`/v1/domains?org_id=${encodeURIComponent(orgId)}`);
+}
+
+export async function getOrgDomainDNS(
+  orgId: string,
+  domainId: string,
+): Promise<{ domain_id: string; domain: string; dns_records: DNSRecord[] }> {
+  return nerveRequest(
+    `/v1/domains/dns?org_id=${encodeURIComponent(orgId)}&domain_id=${encodeURIComponent(domainId)}`,
+  );
+}
+
+export async function verifyOrgDomain(
+  orgId: string,
+  domainId: string,
+): Promise<{ domain: OrgDomain; checks: { ownership_verified: boolean; details: string } }> {
+  return nerveRequest("/v1/domains/verify", {
+    method: "POST",
+    body: JSON.stringify({ org_id: orgId, domain_id: domainId }),
+  });
+}
+
+export async function deleteOrgDomain(
+  orgId: string,
+  domainId: string,
+): Promise<{ status: string }> {
+  return nerveRequest(
+    `/v1/domains/${encodeURIComponent(domainId)}?org_id=${encodeURIComponent(orgId)}`,
+    { method: "DELETE" },
+  );
+}

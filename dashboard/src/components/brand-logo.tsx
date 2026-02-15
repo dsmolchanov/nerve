@@ -22,28 +22,18 @@ export function BrandLogo({
         style={{ width: size, height: size }}
         aria-hidden={showWordmark}
       >
-        {animated ? (
-          <video
-            className="brand-mark-media"
-            autoPlay
-            loop
-            muted
-            playsInline
-            preload="auto"
-            poster="/logo-nerve-mark.png"
-          >
-            <source src="/logo-nerve-loop.mp4" type="video/mp4" />
-          </video>
-        ) : (
-          <Image
-            src="/logo-nerve-mark.png"
-            alt="Nerve logo"
-            width={size}
-            height={size}
-            className="brand-mark-media"
-            priority
-          />
-        )}
+        <Image
+          src="/logo-nerve.svg"
+          alt="Nerve logo"
+          width={size}
+          height={size}
+          className="brand-mark-media"
+          draggable={false}
+          // SVG does not benefit from Next image optimization, but using <Image />
+          // keeps lint happy and ensures consistent behavior across the app.
+          unoptimized
+          priority
+        />
       </span>
       {showWordmark && <span className={wordmarkClassName}>Nerve</span>}
     </div>
