@@ -31,5 +31,5 @@ export async function onboardAction(
     return { error: message };
   }
 
-  redirect("/");
+  redirect("/dashboard");
 }

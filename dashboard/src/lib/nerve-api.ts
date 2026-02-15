@@ -17,6 +17,9 @@ async function nerveRequest<T>(
 ): Promise<T> {
   const res = await fetch(`${NERVE_API_URL}${path}`, {
     ...options,
+    // Next.js App Router caches `fetch()` GETs by default; make billing state
+    // always reflect the latest control-plane data.
+    cache: "no-store",
     headers: {
       "Content-Type": "application/json",
       "X-API-Key": NERVE_ADMIN_KEY,

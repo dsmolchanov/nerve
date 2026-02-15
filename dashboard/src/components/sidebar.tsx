@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const NAV_ITEMS = [
-  { href: "/", label: "Overview" },
+  { href: "/dashboard", label: "Overview" },
   { href: "/api-keys", label: "API Keys" },
   { href: "/billing", label: "Billing" },
 ] as const;
@@ -17,7 +17,9 @@ export function Sidebar() {
       <nav className="flex flex-1 flex-col gap-1 p-4">
         {NAV_ITEMS.map(({ href, label }) => {
           const active =
-            href === "/" ? pathname === "/" : pathname.startsWith(href);
+            href === "/dashboard"
+              ? pathname === "/dashboard"
+              : pathname.startsWith(href);
           return (
             <Link
               key={href}
@@ -33,17 +35,6 @@ export function Sidebar() {
           );
         })}
       </nav>
-
-      <div className="border-t border-line p-4">
-        <form action="/api/auth/signout" method="POST">
-          <button
-            type="submit"
-            className="w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-muted transition hover:bg-bg-1 hover:text-ink"
-          >
-            Sign out
-          </button>
-        </form>
-      </div>
     </aside>
   );
 }
