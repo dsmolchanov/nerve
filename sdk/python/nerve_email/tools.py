@@ -142,6 +142,20 @@ NERVE_TOOLS: Dict[str, ToolDefinition] = {
         },
         required=["thread_id", "body_or_draft_id"],
     ),
+    "compose_email": ToolDefinition(
+        name="compose_email",
+        description="Compose and send a new email (not a reply). Use to start a new conversation with a recipient.",
+        parameters={
+            "type": "object",
+            "properties": {
+                "inbox_id": {"type": "string", "description": "Sender inbox ID"},
+                "to": {"type": "string", "description": "Recipient email address"},
+                "subject": {"type": "string", "description": "Email subject line"},
+                "body": {"type": "string", "description": "Email body text"},
+            },
+        },
+        required=["inbox_id", "to", "subject", "body"],
+    ),
 }
 
 

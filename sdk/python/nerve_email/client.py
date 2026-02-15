@@ -40,7 +40,7 @@ _CLIENT_NAME = "nerve-email-python"
 _CLIENT_VERSION = "0.1.0"
 
 # Tools that are NOT safe to retry (non-idempotent)
-_NON_IDEMPOTENT_TOOLS = frozenset({"send_reply"})
+_NON_IDEMPOTENT_TOOLS = frozenset({"send_reply", "compose_email"})
 
 
 class NerveClient:
@@ -311,6 +311,34 @@ class NerveClient:
                 "thread_id": thread_id,
                 "body_or_draft_id": body_or_draft_id,
                 "needs_human_approval": needs_human_approval,
+            },
+        )
+
+    async def compose_email(
+        self,
+        inbox_id: str,
+        to: str,
+        subject: str,
+        body: str,
+    ) -> Dict[str, Any]:
+        """Compose and send a new email (not a reply). NOT retried (non-idempotent).
+
+        Args:
+            inbox_id: Sender inbox ID
+            to: Recipient email address
+            subject: Email subject line
+            body: Email body text
+
+        Returns:
+            dict with thread_id, message_id, status
+        """
+        return await self._call_tool(
+            "compose_email",
+            {
+                "inbox_id": inbox_id,
+                "to": to,
+                "subject": subject,
+                "body": body,
             },
         )
 
