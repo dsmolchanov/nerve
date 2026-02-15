@@ -10,6 +10,10 @@ const AVAILABLE_SCOPES = [
   { value: "nerve:email.send", label: "Send emails" },
 ] as const;
 
+const FALLBACK_MCP_ENDPOINT =
+  process.env.NEXT_PUBLIC_NERVE_DEFAULT_MCP_ENDPOINT ||
+  "https://nerve-runtime.fly.dev/mcp";
+
 export default function ApiKeysPage() {
   const [label, setLabel] = useState("");
   const [selectedScopes, setSelectedScopes] = useState<string[]>([
@@ -22,7 +26,11 @@ export default function ApiKeysPage() {
   const [loading, setLoading] = useState(false);
   const [revokingId, setRevokingId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-  const [mcpEndpoint, setMcpEndpoint] = useState("");
+  const [mcpDefaultEndpoint, setMcpDefaultEndpoint] = useState(
+    FALLBACK_MCP_ENDPOINT,
+  );
+  const [mcpOverride, setMcpOverride] = useState("");
+  const [savedMcpOverride, setSavedMcpOverride] = useState("");
   const [runtimeLoading, setRuntimeLoading] = useState(true);
   const [runtimeSaving, setRuntimeSaving] = useState(false);
   const [runtimeError, setRuntimeError] = useState<string | null>(null);
@@ -32,6 +40,17 @@ export default function ApiKeysPage() {
   const activeCount = useMemo(
     () => keys.filter((key) => !key.revoked_at).length,
     [keys],
+  );
+
+  const effectiveMcpEndpoint = useMemo(() => {
+    const override = mcpOverride.trim();
+    if (override !== "") return override;
+    return mcpDefaultEndpoint;
+  }, [mcpDefaultEndpoint, mcpOverride]);
+
+  const runtimeDirty = useMemo(
+    () => mcpOverride.trim() !== savedMcpOverride,
+    [mcpOverride, savedMcpOverride],
   );
 
   useEffect(() => {
@@ -75,7 +94,18 @@ export default function ApiKeysPage() {
         setRuntimeError(data.error || "Failed to load MCP endpoint");
         return;
       }
-      setMcpEndpoint(typeof data.mcp_endpoint === "string" ? data.mcp_endpoint : "");
+
+      const defaultEndpoint =
+        typeof data.default_mcp_endpoint === "string" &&
+        data.default_mcp_endpoint.trim() !== ""
+          ? data.default_mcp_endpoint.trim()
+          : FALLBACK_MCP_ENDPOINT;
+      const savedOverride =
+        typeof data.mcp_endpoint === "string" ? data.mcp_endpoint.trim() : "";
+
+      setMcpDefaultEndpoint(defaultEndpoint);
+      setMcpOverride(savedOverride);
+      setSavedMcpOverride(savedOverride);
     } catch {
       setRuntimeError("Network error");
     } finally {
@@ -170,15 +200,30 @@ export default function ApiKeysPage() {
       const res = await fetch("/api/org-runtime", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mcp_endpoint: mcpEndpoint.trim() }),
+        body: JSON.stringify({ mcp_endpoint: mcpOverride.trim() }),
       });
       const data = await res.json();
       if (!res.ok) {
         setRuntimeError(data.error || "Failed to save MCP endpoint");
         return;
       }
-      setMcpEndpoint(typeof data.mcp_endpoint === "string" ? data.mcp_endpoint : "");
-      setRuntimeMessage("MCP endpoint saved");
+
+      const defaultEndpoint =
+        typeof data.default_mcp_endpoint === "string" &&
+        data.default_mcp_endpoint.trim() !== ""
+          ? data.default_mcp_endpoint.trim()
+          : mcpDefaultEndpoint;
+      const savedOverride =
+        typeof data.mcp_endpoint === "string" ? data.mcp_endpoint.trim() : "";
+
+      setMcpDefaultEndpoint(defaultEndpoint);
+      setMcpOverride(savedOverride);
+      setSavedMcpOverride(savedOverride);
+      setRuntimeMessage(
+        savedOverride === ""
+          ? "Using default MCP endpoint"
+          : "Custom MCP endpoint override saved",
+      );
     } catch {
       setRuntimeError("Network error");
     } finally {
@@ -187,8 +232,8 @@ export default function ApiKeysPage() {
   }
 
   async function copyEndpoint() {
-    if (!mcpEndpoint) return;
-    await navigator.clipboard.writeText(mcpEndpoint);
+    if (!effectiveMcpEndpoint) return;
+    await navigator.clipboard.writeText(effectiveMcpEndpoint);
     setCopiedEndpoint(true);
     setTimeout(() => setCopiedEndpoint(false), 1500);
   }
@@ -197,6 +242,12 @@ export default function ApiKeysPage() {
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return value;
     return date.toLocaleString();
+  }
+
+  function runtimeSaveLabel() {
+    if (runtimeSaving) return "Saving…";
+    if (mcpOverride.trim() === "") return "Use default endpoint";
+    return "Save override";
   }
 
   return (
@@ -208,49 +259,78 @@ export default function ApiKeysPage() {
       </p>
 
       <div className="rounded-2xl border border-line bg-card p-6 shadow-sm">
-        <h3 className="mb-2 text-sm font-medium text-ink">Tenant MCP endpoint</h3>
+        <h3 className="mb-2 text-sm font-medium text-ink">MCP endpoint</h3>
         <p className="mb-4 text-sm text-muted">
-          Configure the MCP URL for this organization. Agents should connect to this
-          endpoint when using your tenant&apos;s keys.
+          Use this endpoint in your integrations. By default all tenants use the
+          shared runtime endpoint and are isolated by API key/org.
         </p>
 
-        {runtimeLoading ? (
-          <p className="text-sm text-muted">Loading MCP endpoint…</p>
-        ) : (
-          <>
-            <label className="mb-3 block text-sm font-medium text-ink" htmlFor="mcp-endpoint">
-              MCP endpoint
-            </label>
-            <input
-              id="mcp-endpoint"
-              type="url"
-              value={mcpEndpoint}
-              onChange={(e) => setMcpEndpoint(e.target.value)}
-              placeholder="https://nerve-runtime.fly.dev/mcp"
-              className="w-full rounded-[14px] border border-line bg-white px-4 py-3 text-sm text-ink placeholder:text-muted/60 outline-none focus:border-accent focus:ring-1 focus:ring-accent"
-            />
+        <label className="mb-2 block text-sm font-medium text-ink" htmlFor="mcp-effective">
+          Effective endpoint
+        </label>
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            id="mcp-effective"
+            type="text"
+            value={effectiveMcpEndpoint}
+            readOnly
+            className="min-w-0 flex-1 rounded-[14px] border border-line bg-bg-1 px-4 py-3 text-sm text-ink outline-none"
+          />
+          <button
+            onClick={copyEndpoint}
+            disabled={!effectiveMcpEndpoint}
+            className="rounded-[14px] border border-line bg-card px-5 py-2.5 text-sm font-medium text-ink transition hover:bg-bg-1 disabled:opacity-50"
+          >
+            {copiedEndpoint ? "Copied!" : "Copy endpoint"}
+          </button>
+        </div>
+        <p className="mt-2 text-xs text-muted">
+          {mcpOverride.trim() === ""
+            ? "Using default shared runtime endpoint."
+            : "Using custom endpoint override for this org."}
+        </p>
 
-            <div className="mt-4 flex flex-wrap items-center gap-2">
-              <button
-                onClick={saveRuntimeConfig}
-                disabled={runtimeSaving}
-                className="rounded-[14px] bg-accent px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-accent/90 disabled:opacity-50"
-              >
-                {runtimeSaving ? "Saving…" : "Save endpoint"}
-              </button>
-              <button
-                onClick={copyEndpoint}
-                disabled={!mcpEndpoint}
-                className="rounded-[14px] border border-line bg-card px-5 py-2.5 text-sm font-medium text-ink transition hover:bg-bg-1 disabled:opacity-50"
-              >
-                {copiedEndpoint ? "Copied!" : "Copy endpoint"}
-              </button>
-            </div>
+        <div className="mt-5 border-t border-line pt-5">
+          <label className="mb-2 block text-sm font-medium text-ink" htmlFor="mcp-override">
+            Custom endpoint override (optional)
+          </label>
+          <input
+            id="mcp-override"
+            type="url"
+            value={mcpOverride}
+            onChange={(e) => setMcpOverride(e.target.value)}
+            placeholder={mcpDefaultEndpoint}
+            className="w-full rounded-[14px] border border-line bg-white px-4 py-3 text-sm text-ink placeholder:text-muted/60 outline-none focus:border-accent focus:ring-1 focus:ring-accent"
+          />
+          <p className="mt-2 text-xs text-muted">
+            Leave empty to use the default endpoint shown above.
+          </p>
 
-            {runtimeMessage && <p className="mt-3 text-sm text-emerald-700">{runtimeMessage}</p>}
-            {runtimeError && <p className="mt-3 text-sm text-red-600">{runtimeError}</p>}
-          </>
-        )}
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <button
+              onClick={saveRuntimeConfig}
+              disabled={runtimeSaving || !runtimeDirty}
+              className="rounded-[14px] bg-accent px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-accent/90 disabled:opacity-50"
+            >
+              {runtimeSaveLabel()}
+            </button>
+            <button
+              onClick={() => {
+                setMcpOverride(savedMcpOverride);
+                setRuntimeMessage(null);
+                setRuntimeError(null);
+              }}
+              disabled={runtimeSaving || !runtimeDirty}
+              className="rounded-[14px] border border-line bg-card px-5 py-2.5 text-sm font-medium text-ink transition hover:bg-bg-1 disabled:opacity-50"
+            >
+              Discard changes
+            </button>
+          </div>
+        </div>
+
+        {runtimeLoading && <p className="mt-3 text-sm text-muted">Loading saved override…</p>}
+        {runtimeMessage && <p className="mt-3 text-sm text-emerald-700">{runtimeMessage}</p>}
+        {runtimeError && <p className="mt-3 text-sm text-red-600">{runtimeError}</p>}
       </div>
 
       <div className="rounded-2xl border border-line bg-card p-6 shadow-sm">
