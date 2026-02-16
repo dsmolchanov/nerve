@@ -13,7 +13,7 @@ export function BrandLogo({
   showWordmark = true,
   animated = true,
   className = "",
-  wordmarkClassName = "font-heading text-2xl font-semibold text-ink",
+  wordmarkClassName = "font-body text-2xl font-semibold text-ink tracking-tight",
 }: BrandLogoProps) {
   return (
     <div className={`brand-lockup ${className}`.trim()}>
@@ -35,7 +35,12 @@ export function BrandLogo({
           priority
         />
       </span>
-      {showWordmark && <span className={wordmarkClassName}>Nerve</span>}
+      {showWordmark && (
+        <span className={`inline-flex items-baseline ${wordmarkClassName}`.trim()}>
+          <span className="font-semibold">nerve</span>
+          <span className="font-normal text-muted">.email</span>
+        </span>
+      )}
     </div>
   );
 }
